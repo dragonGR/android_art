@@ -4827,9 +4827,19 @@ void MethodVerifier<kVerifierDebug>::VerifyISFieldAccess(const Instruction* inst
   const RegType* field_type = nullptr;
   if (field != nullptr) {
     if (kAccType == FieldAccessType::kAccPut) {
-      if (field->IsFinal() && field->GetDeclaringClass() != GetDeclaringClass().GetClass()) {
-        Fail(VERIFY_ERROR_ACCESS_FIELD) << "cannot modify final field " << field->PrettyField()
-                                        << " from other class " << GetDeclaringClass();
+      if (field->IsFinal()) {
+        if (field->GetDeclaringClass() != GetDeclaringClass().GetClass()) {
+          Fail(VERIFY_ERROR_ACCESS_FIELD) << "Impossible to modify field"
+                                          << field->PrettyField()
+                                          << "from superclass"
+                                          << GetDeclaringClass();
+        }
+        if (!IsConstructor()) {
+          Fail(VERIFY_ERROR_ACCESS_FIELD) << "unable to modify field "
+                                          << field->PrettyField()
+                                          << " from non-constructor "
+                                          << dex_file_->PrettyMethod(dex_method_idx_);
+        }
         // Keep hunting for possible hard fails.
       }
     }
